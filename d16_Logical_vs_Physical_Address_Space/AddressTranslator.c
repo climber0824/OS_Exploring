@@ -24,6 +24,37 @@ typedef struct {
 } AddressTranslator;
 
 
+typedef struct {
+    unsigned int base;
+    unsigned int limit;
+    unsigned int protection;
+} SegmentDescriptor;
+
+
+typedef struct {
+    SegmentDescriptor* segments;
+    int num_segments;
+} SegmentTable;
+
+
+typedef struct {
+    unsigned int frame_num;
+    unsigned int valid;
+    unsigned int protection_bits;
+} PageTableEntry;
+
+
+typedef struct {
+    AddressTranslator* address_translator;
+    SegmentTable* segment_table;
+    PageTableEntry* page_table;
+
+    unsigned int translations;
+    unsigned int page_faults;
+    unsigned int segment_violations;
+} MemoryManager;
+
+
 AddressTranslator* initializeAddressTranslator() {
     AddressTranslator* translator = (AddressTranslator*)malloc(sizeof(AddressTranslator));
 
@@ -45,6 +76,27 @@ AddressTranslator* initializeAddressTranslator() {
     translator->used_physical_memory = 0;
 
     return translator;
+}
+
+
+SegmentTable* initSegmentTable() {
+    SegmentTable* st = (SegmentTable*)malloc(sizeof(SegmentTable));
+    st->segments = (SegmentDescriptor*)calloc(MAX_SEGMENTS, sizeof(SegmentDescriptor));
+    st->num_segments = 0;
+
+    return st;
+}
+
+
+MemoryManager* initMemoryManager() {
+    MemoryManager* mm = (MemoryManager*)malloc(sizeof(MemoryManager));
+    mm->address_translator = initializeAddressTranslator();
+    mm->segment_table = initSegmentTable();
+    mm->translations = 0;
+    mm->page_faults = 0;
+    mm->segment_violations = 0;
+
+    return mm;
 }
 
 
