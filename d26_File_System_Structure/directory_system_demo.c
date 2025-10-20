@@ -15,6 +15,16 @@ typedef struct DirectorySystem {
 } DirectorySystem;
 
 
+typedef struct DirectoryStats {
+    size_t cache_hits;
+    size_t cache_misses;
+    size_t total_operations;
+    struct timespec total_lookup_time;
+    struct timespec total_create_time;
+    struct timespec total_delete_time;
+} DirectoryStats;
+
+
 DirectorySystem *create_directory_system(const char *root_path) {
     DirectorySystem *system = malloc(sizeof(DirectorySystem));
     if (!system) return NULL;
@@ -39,6 +49,34 @@ DirectorySystem *create_directory_system(const char *root_path) {
     system->ops.list   = list_directory_impl;
     
     return system;
+}
+
+
+void update_stats(DirectorySystem *stats, struct timespec start, struct timespec end,
+                  int operation_type) {
+    
+    struct timespec diff;
+    diff.tv_sec = end.tv_sec - start.tv_sec;
+    diff.tv_nsec = end.tv_nsec - start.tv_nsec;
+
+    if (diff.tv_nsec < 0) {
+        diff.tv_sec--;
+        diff.tv_nsec += 1e9L;
+    }
+
+    switch (operation_type)
+    {
+    case OPERATION_LOOKUP:
+        timespec_add(&stats->total_lookup_time, &diff);
+        break;
+    case OPERATION_CREATE:
+        timespec_add(&stats->total_create_time, &diff);
+        break;
+    case OPERATION_DELETE:
+        timespec_add(&stats->total_delete_time, &diff);
+        break;
+    
+    stats->total_operations++;
 }
 
 
